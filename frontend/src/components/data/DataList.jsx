@@ -24,6 +24,8 @@ import ConfirmDelete from "./ConfirmDelete";
 import EditModal from "./EditModal";
 import SuccessAlert from "./SuccessAlert";
 
+import { Alert } from "react-bootstrap"; // ✅ import Alert untuk pesan kosong
+
 const DataList = ({ fetchFunction, deleteFunction, editFunction, headers, user, formStructure }) => {
   // Fetch data
   const { data, setData, loading, error } = useFetchData(fetchFunction);
@@ -56,15 +58,21 @@ const DataList = ({ fetchFunction, deleteFunction, editFunction, headers, user, 
       {editSuccess && <SuccessAlert message={editSuccess} />}
 
       {/* Tombol Cetak PDF */}
-   <CetakPDF data={data} user={user} headers={headers} />
+      <CetakPDF data={data} user={user} headers={headers} />
 
-      {/* Tabel Data */}
-      <TableGenerik
-        headers={headers}
-        data={data}
-        onDelete={(item) => setItemToDelete(item)}
-        onEdit={(item) => setItemToEdit(item)}
-      />
+      {/* Tabel Data atau Pesan jika kosong */}
+      {data.length === 0 ? (
+        <Alert variant="warning" className="mt-3 text-center">
+          Data tidak ditemukan
+        </Alert>
+      ) : (
+        <TableGenerik
+          headers={headers}
+          data={data}
+          onDelete={(item) => setItemToDelete(item)}
+          onEdit={(item) => setItemToEdit(item)}
+        />
+      )}
 
       {/* Modal konfirmasi hapus */}
       <ConfirmDelete
@@ -86,8 +94,7 @@ const DataList = ({ fetchFunction, deleteFunction, editFunction, headers, user, 
           setItemToEdit(null);
         }}
         onCancel={() => setItemToEdit(null)}
-        
-formStructure={formStructure}        
+        formStructure={formStructure}
       />
     </div>
   );

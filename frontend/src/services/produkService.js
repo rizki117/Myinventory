@@ -65,14 +65,18 @@ api.interceptors.response.use(
 // ==========================
 
 // Ambil semua produk
-export const getAllProduk = async () => {
+// Ambil semua produk
+// services/produkService.js
+// Ambil semua produk dengan pagination & search
+export const getAllProduk = async (limit = 5, offset = 0, search = "") => {
   try {
-    const response = await api.get("/produk");
-    return response.data;
+    const response = await api.get(`/produk?limit=${limit}&offset=${offset}&search=${encodeURIComponent(search)}`);
+    return response.data; // { data, totalRows }
   } catch (err) {
     throw err;
   }
 };
+
 
 // Buat produk baru
 export const createProduk = async (data) => {

@@ -11,27 +11,49 @@ import User from "../models/userModel.js"
 import Produk from "../models/produkModel.js"
 import { Op } from "sequelize";
 
-//tampil semua produk
-export const getAllProduk= async(req, res)=>{
- try{
-let response;
-if(req.user.role === "admin"){
-response =await Produk.findAll({attributes:['uuid', 'name', 'price', 'harga', 'description'], include:[{model:User, attributes:['name', 'email', 'role']}]
+
+// Ambil semua data produk
+export const getAllProduk = async (req, res) => {
+  try {
+    const { limit = 5, offset = 0, search = "" } = req.query;
+
+    const queryOptions = {
+      attributes: ['uuid', 'name', 'price', 'harga', 'description', 'createdAt'],
+      include: [
+        {
+          model: User,
+          attributes: ['name', 'email', 'role'],
+        },
+      ],
+      where: {},
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [['createdAt', 'DESC']], // ⬅️ Menampilkan data terbaru di atas
+    };
+
+    // Jika ada pencarian nama
+    if (search) {
+      queryOptions.where.name = {
+        [Op.like]: `%${search}%`,
+      };
+    }
+
+    // Jika user bukan admin, hanya tampilkan produk miliknya
+    if (req.user.role !== "admin") {
+      queryOptions.where.userId = req.user.userId;
+    }
+
+    const { rows, count } = await Produk.findAndCountAll(queryOptions);
+
+    res.status(200).json({
+      data: rows,
+      totalRows: count,
     });
-}else{
-  response =await Produk.findAll({attributes:['uuid', 'name', 'price', 'harga', 'description'], where:{userId:req.user.userId}, include:[{model:User, attributes:['name', 'email', 'role']}]
-  })
-}  
-
-res.status(200).json(response);
-
- }catch(error){
- console.error('gagal ambil data');
- res.status(500).json({msg: error.message})
- }
+  } catch (error) {
+    console.error("Gagal ambil data produk:", error);
+    res.status(500).json({ msg: error.message });
+  }
 };
-
-
 
 //buat produk atu create produk 
 export const createProduk= async(req, res)=>{
