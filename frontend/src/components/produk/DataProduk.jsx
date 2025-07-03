@@ -8,6 +8,9 @@ import SearchData from '../../components/myprivate/SearchData';
 import PaginationControls from '../../components/myprivate/PaginationControls';
 import { getAllProduk, deleteProduk, updateProduk } from '../../services/produkService';
 
+import SearchFormAdmin from '../../components/myprivate/SearchFormAdmin';
+import LimitInput from '../../components/myprivate/LimitInput';
+
 const DataProduk = () => {
   const { user, loading: loadingMe, error: errorMe } = useGetMe();
 
@@ -70,34 +73,17 @@ const DataProduk = () => {
   return (
     <>
       {user?.role === 'admin' ? (
-        <form
+        <SearchFormAdmin
+          namaBarang={namaBarang}
+          setNamaBarang={setNamaBarang}
+          namaPembuat={namaPembuat}
+          setNamaPembuat={setNamaPembuat}
           onSubmit={(e) => {
             e.preventDefault();
             setSearchTrigger(prev => prev + 1);
             setPage(1);
           }}
-          className="my-3"
-        >
-          <div className="mb-2">
-            <input
-              type="text"
-              placeholder="Cari nama barang..."
-              className="form-control"
-              value={namaBarang}
-              onChange={(e) => setNamaBarang(e.target.value)}
-            />
-          </div>
-          <div className="mb-2">
-            <input
-              type="text"
-              placeholder="Cari nama pembuat..."
-              className="form-control"
-              value={namaPembuat}
-              onChange={(e) => setNamaPembuat(e.target.value)}
-            />
-          </div>
-          <button className="btn btn-primary" type="submit">Cari</button>
-        </form>
+        />
       ) : (
         <SearchData
           value={search}
@@ -110,35 +96,7 @@ const DataProduk = () => {
         />
       )}
 
-      {/* Input jumlah data tampil */}
-      <div className="mb-2">
-        <label htmlFor="limit" className="form-label">Tampilkan jumlah data:</label>
-        <input
-          type="number"
-          id="limit"
-          min={1}
-          value={limit === 0 ? '' : limit}
-          onChange={(e) => {
-            const val = e.target.value;
-            if (val === '') {
-              setLimit(0);
-            } else {
-              const number = parseInt(val);
-              if (!isNaN(number)) {
-                setLimit(number);
-                setPage(1);
-              }
-            }
-          }}
-          onBlur={() => {
-            if (!limit || limit < 1) {
-              setLimit(1);
-            }
-          }}
-          className="form-control"
-          style={{ width: '100px' }}
-        />
-      </div>
+      <LimitInput limit={limit} setLimit={setLimit} setPage={setPage} />
 
       <DataList
         key={`produk-${user?.role}-${searchTrigger}-${page}-${limit}`}
