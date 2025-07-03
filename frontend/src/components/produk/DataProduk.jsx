@@ -12,9 +12,11 @@ const DataProduk = () => {
   const { user, loading: loadingMe, error: errorMe } = useGetMe();
 
   const [search, setSearch] = useState('');
+  const [namaBarang, setNamaBarang] = useState('');
+  const [namaPembuat, setNamaPembuat] = useState('');
   const [searchTrigger, setSearchTrigger] = useState(0);
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(5); // Default tampil 5 data
+  const [limit, setLimit] = useState(5);
   const [totalRows, setTotalRows] = useState(0);
 
   if (loadingMe) return <Spinner animation="border" variant="primary" />;
@@ -33,8 +35,13 @@ const DataProduk = () => {
   }
 
   const fetchFunction = async () => {
-    const offset = (page - 1) * (limit || 1); // default fallback ke 1 jika kosong
-    const result = await getAllProduk(limit || 1, offset, search); // jika limit kosong, kirim 1
+    const offset = (page - 1) * (limit || 1);
+
+    const params = user?.role === 'admin'
+      ? { limit: limit || 1, offset, namaBarang, namaPembuat }
+      : { limit: limit || 1, offset, search };
+
+    const result = await getAllProduk(params);
     const { data, totalRows } = result;
 
     setTotalRows(totalRows);
@@ -62,15 +69,46 @@ const DataProduk = () => {
 
   return (
     <>
-      <SearchData
-        value={search}
-        onChange={setSearch}
-        onSubmit={(e) => {
-          e.preventDefault();
-          setSearchTrigger(prev => prev + 1);
-          setPage(1);
-        }}
-      />
+      {user?.role === 'admin' ? (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            setSearchTrigger(prev => prev + 1);
+            setPage(1);
+          }}
+          className="my-3"
+        >
+          <div className="mb-2">
+            <input
+              type="text"
+              placeholder="Cari nama barang..."
+              className="form-control"
+              value={namaBarang}
+              onChange={(e) => setNamaBarang(e.target.value)}
+            />
+          </div>
+          <div className="mb-2">
+            <input
+              type="text"
+              placeholder="Cari nama pembuat..."
+              className="form-control"
+              value={namaPembuat}
+              onChange={(e) => setNamaPembuat(e.target.value)}
+            />
+          </div>
+          <button className="btn btn-primary" type="submit">Cari</button>
+        </form>
+      ) : (
+        <SearchData
+          value={search}
+          onChange={setSearch}
+          onSubmit={(e) => {
+            e.preventDefault();
+            setSearchTrigger(prev => prev + 1);
+            setPage(1);
+          }}
+        />
+      )}
 
       {/* Input jumlah data tampil */}
       <div className="mb-2">
@@ -83,7 +121,7 @@ const DataProduk = () => {
           onChange={(e) => {
             const val = e.target.value;
             if (val === '') {
-              setLimit(0); // biarkan kosong sementara
+              setLimit(0);
             } else {
               const number = parseInt(val);
               if (!isNaN(number)) {
@@ -94,7 +132,7 @@ const DataProduk = () => {
           }}
           onBlur={() => {
             if (!limit || limit < 1) {
-              setLimit(1); // fallback ke 1 jika kosong atau kurang dari 1
+              setLimit(1);
             }
           }}
           className="form-control"
@@ -103,7 +141,7 @@ const DataProduk = () => {
       </div>
 
       <DataList
-        key={`${searchTrigger}-${page}-${limit}`}
+        key={`produk-${user?.role}-${searchTrigger}-${page}-${limit}`}
         fetchFunction={fetchFunction}
         deleteFunction={deleteProduk}
         editFunction={updateProduk}

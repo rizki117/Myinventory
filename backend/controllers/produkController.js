@@ -13,47 +13,86 @@ import { Op } from "sequelize";
 
 
 // Ambil semua data produk
+
+
 export const getAllProduk = async (req, res) => {
   try {
-    const { limit = 5, offset = 0, search = "" } = req.query;
+    const {
+      namaBarang = "",
+      namaPembuat = "",
+      search = "",
+      limit = 10,
+      offset = 0
+    } = req.query;
 
-    const queryOptions = {
+    const isAdmin = req.user.role === 'admin';
+
+    let whereConditions = {};
+    let includeOptions = [];
+
+    if (isAdmin) {
+      // Admin: filter nama barang (dari tabel produk)
+      if (namaBarang) {
+        whereConditions.name = {
+          [Op.like]: `%${namaBarang}%`
+        };
+      }
+
+      // Admin: include User dan filter nama pembuat langsung di include
+      includeOptions.push({
+        model: User,
+        attributes: ['name', 'email', 'role'],
+        required: Boolean(namaPembuat),
+        ...(namaPembuat && {
+          where: {
+            name: {
+              [Op.like]: `%${namaPembuat}%`
+            }
+          }
+        })
+      });
+    } else {
+      // User biasa hanya boleh lihat data sendiri
+      whereConditions = {
+        userId: req.user.userId
+      };
+
+      if (search) {
+        whereConditions.name = {
+          [Op.like]: `%${search}%`
+        };
+      }
+
+      // Tetap include User agar bisa ditampilkan
+      includeOptions.push({
+        model: User,
+        attributes: ['name', 'email', 'role'],
+        required: false
+      });
+    }
+
+    const produk = await Produk.findAndCountAll({
       attributes: ['uuid', 'name', 'price', 'harga', 'description', 'createdAt'],
-      include: [
-        {
-          model: User,
-          attributes: ['name', 'email', 'role'],
-        },
-      ],
-      where: {},
+      include: includeOptions,
+      where: whereConditions,
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['createdAt', 'DESC']], // ⬅️ Menampilkan data terbaru di atas
-    };
-
-    // Jika ada pencarian nama
-    if (search) {
-      queryOptions.where.name = {
-        [Op.like]: `%${search}%`,
-      };
-    }
-
-    // Jika user bukan admin, hanya tampilkan produk miliknya
-    if (req.user.role !== "admin") {
-      queryOptions.where.userId = req.user.userId;
-    }
-
-    const { rows, count } = await Produk.findAndCountAll(queryOptions);
+      order: [['createdAt', 'DESC']],
+      // logging: console.log, // aktifkan jika ingin cek query SQL
+    });
 
     res.status(200).json({
-      data: rows,
-      totalRows: count,
+      data: produk.rows,
+      totalRows: produk.count,
     });
+
   } catch (error) {
     console.error("Gagal ambil data produk:", error);
     res.status(500).json({ msg: error.message });
   }
 };
+
+
 
 //buat produk atu create produk 
 export const createProduk= async(req, res)=>{
