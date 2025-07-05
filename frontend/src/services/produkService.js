@@ -65,6 +65,7 @@ api.interceptors.response.use(
 // ==========================
 
 // Ambil semua produk
+
 export const getAllProduk = async ({ limit = 5, offset = 0, search = "", namaBarang = "", namaPembuat = "" }) => {
   try {
     const params = new URLSearchParams({

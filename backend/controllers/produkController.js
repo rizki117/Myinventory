@@ -9,11 +9,10 @@
 
 import User from "../models/userModel.js"
 import Produk from "../models/produkModel.js"
-import { Op } from "sequelize";
+import {Sequelize, Op } from "sequelize";
 
 
 // Ambil semua data produk
-
 
 export const getAllProduk = async (req, res) => {
   try {
@@ -31,14 +30,12 @@ export const getAllProduk = async (req, res) => {
     let includeOptions = [];
 
     if (isAdmin) {
-      // Admin: filter nama barang (dari tabel produk)
       if (namaBarang) {
         whereConditions.name = {
           [Op.like]: `%${namaBarang}%`
         };
       }
 
-      // Admin: include User dan filter nama pembuat langsung di include
       includeOptions.push({
         model: User,
         attributes: ['name', 'email', 'role'],
@@ -52,7 +49,6 @@ export const getAllProduk = async (req, res) => {
         })
       });
     } else {
-      // User biasa hanya boleh lihat data sendiri
       whereConditions = {
         userId: req.user.userId
       };
@@ -63,7 +59,6 @@ export const getAllProduk = async (req, res) => {
         };
       }
 
-      // Tetap include User agar bisa ditampilkan
       includeOptions.push({
         model: User,
         attributes: ['name', 'email', 'role'],
@@ -72,18 +67,36 @@ export const getAllProduk = async (req, res) => {
     }
 
     const produk = await Produk.findAndCountAll({
-      attributes: ['uuid', 'name', 'price', 'harga', 'description', 'createdAt'],
+      attributes: [
+        'uuid',
+        'name',
+        'price',
+        'harga',
+        'description',
+        'createdAt',
+        [Sequelize.literal('price * harga'), 'total']
+      ],
       include: includeOptions,
       where: whereConditions,
       limit: parseInt(limit),
       offset: parseInt(offset),
       order: [['createdAt', 'DESC']],
-      // logging: console.log, // aktifkan jika ingin cek query SQL
+    });
+
+    // Tambahkan total keseluruhan
+    const totalSum = await Produk.findOne({
+      attributes: [
+        [Sequelize.fn('SUM', Sequelize.literal('price * harga')), 'totalSemua']
+      ],
+      where: whereConditions,
+      include: includeOptions,
+      raw: true
     });
 
     res.status(200).json({
       data: produk.rows,
       totalRows: produk.count,
+      totalSemua: totalSum?.totalSemua || 0
     });
 
   } catch (error) {

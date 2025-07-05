@@ -19,7 +19,7 @@ const router= express.Router();
 
 router.get('/user', verifyToken, isAdmin, getAllUser);
 
-router.post('/user', createUser);
+router.post('/user', verifyToken, isAdmin, createUser);
 
 router.get('/user/:id', verifyToken, isAdmin, getUserById);
 

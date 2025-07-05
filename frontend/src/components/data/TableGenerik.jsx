@@ -1,13 +1,5 @@
 
-
-
-
-
-
-
-
-
-
+//bagian components/data/
 //bagian components/data/TableGenerik.jsx
 
 import React from "react";

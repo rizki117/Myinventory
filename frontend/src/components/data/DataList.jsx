@@ -1,15 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-//bagian components/data/DataList.jsx
-
 import React from "react";
 import TableGenerik from "./TableGenerik";
 
@@ -24,13 +12,19 @@ import ConfirmDelete from "./ConfirmDelete";
 import EditModal from "./EditModal";
 import SuccessAlert from "./SuccessAlert";
 
-import { Alert } from "react-bootstrap"; // ✅ import Alert untuk pesan kosong
+import { Alert } from "react-bootstrap";
 
-const DataList = ({ fetchFunction, deleteFunction, editFunction, headers, user, formStructure }) => {
-  // Fetch data
+const DataList = ({
+  fetchFunction,
+  deleteFunction,
+  editFunction,
+  headers,
+  user,
+  formStructure,
+  totalTabel // ✅ Tambah prop baru
+}) => {
   const { data, setData, loading, error } = useFetchData(fetchFunction);
 
-  // Delete handler
   const {
     itemToDelete,
     setItemToDelete,
@@ -39,7 +33,6 @@ const DataList = ({ fetchFunction, deleteFunction, editFunction, headers, user, 
     successMessage
   } = useDeleteData(deleteFunction, setData);
 
-  // Edit handler
   const {
     itemToEdit,
     setItemToEdit,
@@ -53,14 +46,11 @@ const DataList = ({ fetchFunction, deleteFunction, editFunction, headers, user, 
 
   return (
     <div>
-      {/* Notifikasi sukses */}
       {successMessage && <SuccessAlert message={successMessage} />}
       {editSuccess && <SuccessAlert message={editSuccess} />}
 
-      {/* Tombol Cetak PDF */}
-      <CetakPDF data={data} user={user} headers={headers} />
+      <CetakPDF data={data} user={user} headers={headers} totalTabel={totalTabel} /> {/* ✅ Tambahkan prop */}
 
-      {/* Tabel Data atau Pesan jika kosong */}
       {data.length === 0 ? (
         <Alert variant="warning" className="mt-3 text-center">
           Data tidak ditemukan
@@ -74,7 +64,6 @@ const DataList = ({ fetchFunction, deleteFunction, editFunction, headers, user, 
         />
       )}
 
-      {/* Modal konfirmasi hapus */}
       <ConfirmDelete
         itemToDelete={itemToDelete}
         onConfirm={() => {
@@ -85,7 +74,6 @@ const DataList = ({ fetchFunction, deleteFunction, editFunction, headers, user, 
         message={`Apakah Anda yakin ingin menghapus ${itemToDelete?.name}?`}
       />
 
-      {/* Modal edit data */}
       <EditModal
         show={!!itemToEdit}
         itemToEdit={itemToEdit}
