@@ -29,7 +29,7 @@ const AddProduk = ({ onSuccess }) => {
       title="Add Produk"
       fields={produk}
       createFunction={handleCreate}
-      initialData={{name: "", price: "", harga:"", description: ""}}
+      initialData={{name: "", price: "", harga:"", description: "", merk: "", panjang: "", lebar: "", warna: "", micron : "", nospk: "", oven: "", gudang: ""}}
       onSuccess={onSuccess}
     />
   );

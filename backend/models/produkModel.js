@@ -31,8 +31,39 @@ type:DataTypes.STRING
  
 userId:{
 type:DataTypes.INTEGER  
- }
-  
+ },
+ 
+ merk:{
+ type:DataTypes.STRING
+ },
+ 
+ lebar:{
+  type:DataTypes.STRING
+ },
+ 
+panjang:{
+ type:DataTypes.STRING
+},
+
+warna:{
+ type:DataTypes.STRING
+},
+
+micron:{
+ type:DataTypes.STRING
+},
+
+nospk:{
+ type:DataTypes.STRING
+},
+
+oven:{
+  type:DataTypes.STRING
+},
+
+gudang:{
+ type:DataTypes.STRING
+}
  
  
 },{

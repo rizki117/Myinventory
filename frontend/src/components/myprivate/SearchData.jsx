@@ -11,7 +11,7 @@ const SearchData = ({ value, onChange, onSubmit }) => {
       <InputGroup>
         <Form.Control
           type="text"
-          placeholder="Cari produk berdasarkan nama..."
+          placeholder="Cari Nama Customer ..."
           value={value}
           onChange={(e) => onChange(e.target.value)}
           aria-label="Cari produk"

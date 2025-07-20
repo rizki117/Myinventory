@@ -1,12 +1,4 @@
 
-
-
-
-
-
-
-
-
 import User from "../models/userModel.js"
 import Produk from "../models/produkModel.js"
 import {Sequelize, Op } from "sequelize";
@@ -21,7 +13,12 @@ export const getAllProduk = async (req, res) => {
       namaPembuat = "",
       search = "",
       limit = 10,
-      offset = 0
+      offset = 0,
+      tanggal,
+      bulan,
+      tahun,
+      startDate,
+      endDate
     } = req.query;
 
     const isAdmin = req.user.role === 'admin';
@@ -29,6 +26,7 @@ export const getAllProduk = async (req, res) => {
     let whereConditions = {};
     let includeOptions = [];
 
+    // Admin
     if (isAdmin) {
       if (namaBarang) {
         whereConditions.name = {
@@ -48,16 +46,10 @@ export const getAllProduk = async (req, res) => {
           }
         })
       });
-    } else {
-      whereConditions = {
-        userId: req.user.userId
-      };
-
-      if (search) {
-        whereConditions.name = {
-          [Op.like]: `%${search}%`
-        };
-      }
+    } 
+    // Bukan admin
+    else {
+      whereConditions.userId = req.user.userId;
 
       includeOptions.push({
         model: User,
@@ -66,14 +58,47 @@ export const getAllProduk = async (req, res) => {
       });
     }
 
+    // Pencarian multi-field (name, nospk, merk, warna)
+    if (search) {
+      whereConditions[Op.or] = [
+        { name: { [Op.like]: `%${search}%` } },
+        { nospk: { [Op.like]: `%${search}%` } },
+        { merk: { [Op.like]: `%${search}%` } },
+        { warna: { [Op.like]: `%${search}%` } }
+      ];
+    }
+
+    // Filter tanggal
+    if (startDate && endDate) {
+      whereConditions.createdAt = {
+        [Op.between]: [new Date(startDate), new Date(endDate)]
+      };
+    } else if (tanggal && bulan && tahun) {
+      const start = new Date(`${tahun}-${bulan}-${tanggal}T00:00:00`);
+      const end = new Date(`${tahun}-${bulan}-${tanggal}T23:59:59`);
+      whereConditions.createdAt = {
+        [Op.between]: [start, end]
+      };
+    } else if (bulan && tahun) {
+      const start = new Date(`${tahun}-${bulan}-01T00:00:00`);
+      const end = new Date(start);
+      end.setMonth(end.getMonth() + 1);
+      whereConditions.createdAt = {
+        [Op.gte]: start,
+        [Op.lt]: end
+      };
+    } else if (tahun) {
+      const start = new Date(`${tahun}-01-01T00:00:00`);
+      const end = new Date(`${tahun}-12-31T23:59:59`);
+      whereConditions.createdAt = {
+        [Op.between]: [start, end]
+      };
+    }
+
     const produk = await Produk.findAndCountAll({
       attributes: [
-        'uuid',
-        'name',
-        'price',
-        'harga',
-        'description',
-        'createdAt',
+        'uuid', 'name', 'price', 'harga', 'description', 'createdAt',
+        'merk', 'panjang', 'lebar', 'warna', 'micron', 'nospk', 'oven', 'gudang',
         [Sequelize.literal('price * harga'), 'total']
       ],
       include: includeOptions,
@@ -83,7 +108,6 @@ export const getAllProduk = async (req, res) => {
       order: [['createdAt', 'DESC']],
     });
 
-    // Tambahkan total keseluruhan
     const totalSum = await Produk.findOne({
       attributes: [
         [Sequelize.fn('SUM', Sequelize.literal('price * harga')), 'totalSemua']
@@ -109,9 +133,9 @@ export const getAllProduk = async (req, res) => {
 
 //buat produk atu create produk 
 export const createProduk= async(req, res)=>{
- const{name, price, harga, description}= req.body;
+ const{name, price, harga, description, merk, panjang, lebar, warna, micron, nospk, oven, gudang}= req.body;
  try{
-await Produk.create({name:name, price:price, userId:req.user.userId, harga:harga, description:description});
+await Produk.create({name, price, userId:req.user.userId, harga, description, merk, panjang, lebar, warna, micron, nospk, oven, gudang});
 res.status(200).json({msg:"Produk Berhasil Dibuat"});     
  }catch(error){
   console.error('gagal membuat produk baru');  res.status(500).json({msg:error.message});
@@ -131,7 +155,7 @@ export const getProdukById = async (req, res) => {
     let response;
     if (req.user.role === "admin") {
       response = await Produk.findOne({
-        attributes: ['uuid', 'name', 'price', 'harga', 'description'],
+        attributes: ['uuid', 'name', 'price', 'harga', 'description', 'merk', 'panjang', 'lebar', 'warna', 'micron', 'nospk', 'oven', 'gudang'],
         where: { id: produk.id },
         include: [{
           model: User,
@@ -140,7 +164,7 @@ export const getProdukById = async (req, res) => {
       });
     } else {
       response = await Produk.findOne({
-        attributes: ['uuid', 'name', 'price', 'harga', 'description'],
+        attributes: ['uuid', 'name', 'price', 'harga', 'description', 'merk', 'panjang', 'lebar', 'warna', 'micron', 'nospk', 'oven', 'gudang'],
         where: {
           [Op.and]: [
             { id: produk.id },
@@ -190,10 +214,10 @@ export const updateProduk = async (req, res) => {
       return res.status(403).json({ msg: "Akses terlarang" });
     }
 
-    const { name, price, harga, description } = req.body;
+    const { name, price, harga, description, merk, panjang, lebar, warna, micron, nospk, oven, gudang} = req.body;
 
     await Produk.update(
-      { name, price, harga, description},
+      { name, price, harga, description, merk, panjang, lebar, warna, micron, nospk, oven, gudang},
       { where: { id: produk.id } }
     );
 

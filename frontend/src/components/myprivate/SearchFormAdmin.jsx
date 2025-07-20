@@ -3,7 +3,7 @@ const SearchFormAdmin = ({ namaBarang, setNamaBarang, namaPembuat, setNamaPembua
     <div className="mb-2">
       <input
         type="text"
-        placeholder="Cari nama barang..."
+        placeholder="Cari Customer / Merk / Warna / NoSPK..."
         className="form-control"
         value={namaBarang}
         onChange={(e) => setNamaBarang(e.target.value)}

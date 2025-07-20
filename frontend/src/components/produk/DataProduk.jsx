@@ -10,6 +10,7 @@ import { getAllProduk, deleteProduk, updateProduk } from '../../services/produkS
 
 import SearchFormAdmin from '../../components/myprivate/SearchFormAdmin';
 import LimitInput from '../../components/myprivate/LimitInput';
+import FilterLaporan from '../../components/myprivate/FilterLaporan';
 import { formatRupiah } from '../../utils/formatRupiah';
 
 const DataProduk = () => {
@@ -24,17 +25,25 @@ const DataProduk = () => {
   const [totalRows, setTotalRows] = useState(0);
   const [totalSemua, setTotalSemua] = useState(0);
   const [dataTabel, setDataTabel] = useState([]);
+  const [filterTanggal, setFilterTanggal] = useState({});
 
   if (loadingMe) return <Spinner animation="border" variant="primary" />;
   if (errorMe) return <Alert variant="danger">Gagal mengambil data login</Alert>;
 
   const headers = [
-    { key: 'name', label: 'Nama' },
+    { key: 'name', label: 'Customer' },
     { key: 'harga', label: 'Harga' },
-    { key: 'price', label: 'Jumlah' },
+    { key: 'price', label: 'J Dus' },
     { key: 'total', label: 'Total' },
-    { key: 'description', label: 'Info' },
     { key: 'createdAt', label: 'Tanggal' },
+    { key: 'merk', label: 'Merk' },
+    { key: 'panjang', label: 'P' },
+    { key: 'lebar', label: 'L' },
+    { key: 'warna', label: 'Color' },
+    { key: 'micron', label: 'Micron' },
+    { key: 'nospk', label: 'Nospk' },
+    { key: 'oven', label: 'Oven' },
+    { key: 'gudang', label: 'Gudang' },
   ];
 
   if (user?.role === 'admin') {
@@ -43,9 +52,15 @@ const DataProduk = () => {
 
   const fetchFunction = async () => {
     const offset = (page - 1) * (limit || 1);
-    const params = user?.role === 'admin'
-      ? { limit: limit || 1, offset, namaBarang, namaPembuat }
-      : { limit: limit || 1, offset, search };
+
+    // Kirim `search` untuk admin dan user biasa
+    const params = {
+      limit: limit || 1,
+      offset,
+      search: user?.role === 'admin' ? namaBarang : search,
+      ...filterTanggal,
+      ...(user?.role === 'admin' && { namaPembuat }),
+    };
 
     const result = await getAllProduk(params);
     const { data, totalRows, totalSemua } = result;
@@ -84,6 +99,14 @@ const DataProduk = () => {
 
   return (
     <>
+      <FilterLaporan
+        onFilterSubmit={(filter) => {
+          setFilterTanggal(filter);
+          setSearchTrigger(prev => prev + 1);
+          setPage(1);
+        }}
+      />
+
       {user?.role === 'admin' ? (
         <SearchFormAdmin
           namaBarang={namaBarang}
@@ -118,7 +141,7 @@ const DataProduk = () => {
         headers={headers}
         formStructure={formStructure}
         user={user}
-        totalTabel={formatRupiah(totalDariTabel)} // ✅ Kirim total ke DataList
+        totalTabel={formatRupiah(totalDariTabel)}
       />
 
       <div className="mt-3 mb-1">

@@ -14,7 +14,7 @@ const CetakPDF = ({ data, headers, totalTabel }) => {
   const [description, setDescription] = useState("");
 
   const handleCetak = () => {
-    const doc = new jsPDF();
+    const doc = new jsPDF("landscape"); // landscape agar lebar tabel cukup
     const pageWidth = doc.internal.pageSize.getWidth();
 
     // Judul (centered)
@@ -23,7 +23,7 @@ const CetakPDF = ({ data, headers, totalTabel }) => {
     doc.setFontSize(14);
     doc.text(pdfTitle, x, 15);
 
-    // Informasi laporan
+    // Info laporan
     const today = new Date().toLocaleDateString("id-ID", {
       day: "2-digit",
       month: "long",
@@ -33,10 +33,9 @@ const CetakPDF = ({ data, headers, totalTabel }) => {
     doc.setFontSize(10);
     let currentY = 25;
 
-    // ✅ Fungsi untuk baris info rapi dan rapat
     const drawLabelValue = (label, value) => {
       const labelX = 14;
-      const colonX = 44; // lebih rapat
+      const colonX = 44;
       const valueX = 48;
       doc.text(label, labelX, currentY);
       doc.text(":", colonX, currentY);
@@ -49,7 +48,6 @@ const CetakPDF = ({ data, headers, totalTabel }) => {
     drawLabelValue("Divisi", division);
     drawLabelValue("Periode", periode);
 
-    // Deskripsi multiline
     if (description) {
       doc.text("Deskripsi", 14, currentY);
       doc.text(":", 44, currentY);
@@ -61,7 +59,7 @@ const CetakPDF = ({ data, headers, totalTabel }) => {
       currentY += 4;
     }
 
-    // Tabel kolom dan baris
+    // Kolom dan baris tabel
     const tableColumn = ["No", ...headers.map(h => h.label)];
     const tableRows = data.map((item, index) => {
       const row = headers.map(h => {
@@ -71,18 +69,25 @@ const CetakPDF = ({ data, headers, totalTabel }) => {
       return [index + 1, ...row];
     });
 
-    // Baris total
+    // Tambah baris total di bawah
     const totalRow = ["#", `Jumlah Keseluruhan: Rp ${totalTabel}`];
     tableRows.push(totalRow);
 
-    // Tampilkan tabel
     autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
       startY: currentY,
       theme: "grid",
+      tableWidth: "auto", // ✅ menyesuaikan isi teks
       styles: {
-        fontSize: 10,
+        fontSize: 8,
+        cellPadding: 2,
+        overflow: "linebreak", // bungkus teks panjang
+      },
+      headStyles: {
+        fillColor: [22, 160, 133],
+        textColor: 255,
+        halign: "center",
       },
       didParseCell: (data) => {
         const isLastRow = data.row.index === tableRows.length - 1;
